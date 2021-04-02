@@ -5,6 +5,8 @@ using SalesWebMvc.Models;
 using System.Collections.Generic;
 using SalesWebMvc.Models.ViewModels;
 using SalesWebMvc.Services.Exceptions;
+using System.Diagnostics;
+using System;
 
 namespace SalesWebMvc.Controllers
 {
@@ -42,11 +44,11 @@ namespace SalesWebMvc.Controllers
 
         public IActionResult Delete(int? id)
         {
-            if (id == null) { return NotFound(); }
+            if (id == null) { return RedirectToAction(nameof(Error), new { message = "Id not provided." }); }
 
             Seller seller = _sellerService.FindById(id.Value);
 
-            if (seller == null) { return NotFound(); }
+            if (seller == null) { return RedirectToAction(nameof(Error), new { message = "Id not found." }); }
 
             return View(seller);
         }
@@ -61,22 +63,22 @@ namespace SalesWebMvc.Controllers
 
         public IActionResult Details(int? id)
         {
-            if (id == null) { NotFound(); }
+            if (id == null) { return RedirectToAction(nameof(Error), new { message = "Id not provided." }); }
 
             Seller seller = _sellerService.FindById(id.Value);
 
-            if (seller == null) { return NotFound(); }
+            if (seller == null) { return RedirectToAction(nameof(Error), new { message = "Id not found." }); }
 
             return View(seller);
         }
 
         public IActionResult Edit(int? id)
         {
-            if (id == null) { return NotFound(); }
+            if (id == null) { return RedirectToAction(nameof(Error), new { message = "Id not provided." }); }
 
             Seller seller = _sellerService.FindById(id.Value);
 
-            if (seller == null) { return NotFound(); }
+            if (seller == null) { return RedirectToAction(nameof(Error), new { message = "Id not found." }); }
 
             List<Department> department = _departmentsService.FindAll();
             SellerFormViewModel viewModel = new SellerFormViewModel() { Departments = department, Seller = seller };
@@ -88,7 +90,7 @@ namespace SalesWebMvc.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Edit(int id, Seller seller)
         {
-            if(id != seller.Id) { return BadRequest(); }
+            if (id != seller.Id) { return RedirectToAction(nameof(Error), new { message = "Id missmatch." }); }
 
             try
             {
@@ -96,16 +98,20 @@ namespace SalesWebMvc.Controllers
 
                 return RedirectToAction(nameof(Index));
             }
-            catch(NotFoundException)
+            catch (ApplicationException ex)
             {
-                return NotFound();
+                return RedirectToAction(nameof(Error), new { message = ex.Message });
             }
-            catch(ConcurrencyException)
+        }
+
+        public IActionResult Error(string message)
+        {
+            ErrorViewModel viewModel = new ErrorViewModel()
             {
-                return BadRequest();
-            }
-
-
+                Message = message,
+                RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+            };
+            return View(viewModel);
         }
     }
 }
