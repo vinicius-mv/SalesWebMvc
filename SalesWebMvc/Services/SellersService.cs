@@ -41,7 +41,7 @@ namespace SalesWebMvc.Services
                 _context.Sellers.Remove(seller);
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateException ex)
+            catch (DbUpdateException)
             {
                 throw new IntegrityException("Can not delete a seller with associated sales record");
             }
