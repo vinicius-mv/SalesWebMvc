@@ -24,8 +24,8 @@ namespace SalesWebMvc.Services
 
         public async Task InsertAsync(Seller seller)
         {
-            _context.Sellers.Add(seller);      
-            await _context.SaveChangesAsync(); 
+            _context.Sellers.Add(seller);
+            await _context.SaveChangesAsync();
         }
 
         public async Task<Seller> FindByIdAsync(int id)
@@ -35,9 +35,16 @@ namespace SalesWebMvc.Services
 
         public async Task RemoveAsync(int id)
         {
-            Seller seller = await _context.Sellers.FindAsync(id);
-            _context.Sellers.Remove(seller);
-            await _context.SaveChangesAsync();
+            try
+            {
+                Seller seller = await _context.Sellers.FindAsync(id);
+                _context.Sellers.Remove(seller);
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                throw new IntegrityException("Can not delete a seller with associated sales record");
+            }
         }
 
         public async Task UpdateAsync(Seller seller)
@@ -52,10 +59,10 @@ namespace SalesWebMvc.Services
                 _context.Update(seller);
                 await _context.SaveChangesAsync();
             }
-            catch(DbUpdateConcurrencyException ex)
+            catch (DbUpdateConcurrencyException ex)
             {
                 // the exception from database(repository) layer is captured and converted to an exception from the service layer
-                throw new ConcurrencyException(ex.Message, ex);
+                throw new ConcurrencyException(ex.Message);
             }
         }
     }
